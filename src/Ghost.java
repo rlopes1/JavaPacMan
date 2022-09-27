@@ -8,7 +8,10 @@ public class Ghost {
     private int yVel = -1;
 
     //private Vector playerPos; = pacman.getPos();
-
+    public Ghost(int startX, int startY) {
+        x = startX;
+        y = startY;
+    }
     //moveToPlayer will need to track where the player is and path to it
     public void moveToPlayer(Vector playerPos) {
         //normalizes a vector going towards the player and sets that to the value of the velocity
@@ -18,6 +21,12 @@ public class Ghost {
         y += yVel;
     }
 
+    public void setX(int x) {
+        this.x = x;
+    }
+    public void setY(int y) {
+        this.y = y;
+    }
     //Ghost collision bounds
     public Rectangle getBounds() {
         return new Rectangle(x, y, 40, 50);
@@ -26,7 +35,7 @@ public class Ghost {
     //paint method for Ghost
     public void paint(Graphics2D g) {
         g.setColor(Color.red);
-        g.fillArc(x, y, 50, 70, -30, 235);
+        g.fillArc(x, y, 40, 50, -30, 235);
         g.setColor(Color.white);
         g.fillOval(x + 10, y + 15, 10, 10);
         g.fillOval(x + 30, y + 15, 10, 10);

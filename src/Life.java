@@ -1,13 +1,17 @@
 import java.awt.*;
 
 public class Life {
-    private static int lives = 3;
+    private int lives;
+
+    public Life(int numLives) {
+        lives = numLives;
+    }
 
 
-    public static void loseLife() {
+    public void loseLife() {
         lives -= 1;
     }
-    public static int getLives() {
+    public int getLives() {
         return lives;
     }
 

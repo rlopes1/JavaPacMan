@@ -1,19 +1,25 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.util.Vector;
+import java.awt.event.*;
 
 public class Pac extends JPanel {
     private int x = 60;
     private int y = 60;
     private int xVel = 0;
     private int yVel = 0;
+    private int pacSize = 40;
+    private Life lives = new Life(3);
 
     private Game game;
     private Ghost red;
+    private Maze level = new Maze(60, 0, Color.blue);
 
 
+    public Pac(Game game, int startX, int startY){
+        this.game = game;
+        x = startX;
+        y = startY;
+    }
     public Pac(Game game) {
         this.game = game;
     }
@@ -23,13 +29,16 @@ public class Pac extends JPanel {
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
             xVel = 1;
+            yVel = 0;
         } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
             xVel = -1;
-        }
-        if (e.getKeyCode() == KeyEvent.VK_UP) {
+            yVel = 0;
+        } else if (e.getKeyCode() == KeyEvent.VK_UP) {
             yVel = -1;
+            xVel = 0;
         } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
             yVel = 1;
+            xVel = 0;
         }
 
     }
@@ -38,44 +47,52 @@ public class Pac extends JPanel {
         yVel = 0;
     }
 
+    public Life getLives() {
+        return lives;
+    }
+    public Rectangle getMoveBound() {
+        return new Rectangle(x + xVel, y + yVel, pacSize, pacSize);
+    }
+    public Rectangle getBounds() {
+        return new Rectangle(x, y, pacSize, pacSize);
+    }
     //Move method
     public void move() {
-        if (Life.getLives() == 0) {
+        boolean wall = game.wallCollision();
+        if (lives.getLives() == 0) {
             game.gameOver();
-        } else if(collideGhost()) {
-            game.reset(0);
-            Life.loseLife();
+        } else if(game.ghostCollision()) {
+
+            game.reset();
+            lives.loseLife();
+        } else if(wall) {
+            xVel = 0;
+            yVel = 0;
         } else {
             x += xVel;
             y += yVel;
         }
+        game.pipPickup();
     }
 
     //Position methods
-    public Vector getPos() {
-        return new Vector(x, y);
-    }
     public void setX(int x) {
         this.x = x;
     }
     public void setY(int y) {
         this.y = y;
     }
-
-    //Collision methods
-    //NEED TO ADD WALL COLLISION
-    public boolean collideGhost() {
-        return game.red.getBounds().intersects(getBounds());
+    public void setXVel(int xVel) {
+        this.xVel = xVel;
     }
-
-    public Rectangle getBounds() {
-        return new Rectangle(x, y, 50, 50);
+    public void setYVel(int yVel) {
+        this.yVel = yVel;
     }
 
     //Paint of the pacman object
     //NEED TO ADD DIRECTIONAL PAINTING
     public void paint(Graphics2D g) {
         g.setColor(Color.yellow);
-        g.fillArc(x, y, 50, 50, 45, 270);
+        g.fillArc(x, y, pacSize, pacSize, 45, 270);
     }
 }
