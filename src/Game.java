@@ -3,15 +3,18 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class Game extends JPanel {
-    public Maze level = new Maze(60, 0, Color.blue);
-    public Score score = new Score();
+    private int tileSize = 100;
+    private static int width;
+    private static int height;
 
-    private int width = 1580;
-    private int height = 1020;
+    public Maze level = new Maze(tileSize, 0, Color.blue);
+    public Score score = new Score(this);
+    public Life lives = new Life(this, 3);
+    public Pac pacman = new Pac(this, 1, 5, tileSize-30);
+    public Ghost red = new Ghost(this, 5, 1, tileSize-30);
 
-    public Pac pacman = new Pac(this, level.getPlayerStart()[0], level.getPlayerStart()[1]);
-    public Ghost red = new Ghost(level.getGhostStart()[0], level.getGhostStart()[1]);
 
+    //Constructor for our Game
     public Game() {
         //Keylistener for inputs from the user
         addKeyListener(new KeyListener() {
@@ -28,37 +31,67 @@ public class Game extends JPanel {
             }
         });
         setFocusable(true);
+
+        width = (tileSize * level.getLevel()[0].length) + tileSize*3;
+        height = (tileSize * level.getLevel().length) + tileSize/3;
     }
 
-    public int getWidth() {
+
+    //Getters for all relevant game info
+    public int getWindowWidth() {
         return width;
     }
-    public int getHeight() {
+    public int getWindowHeight() {
         return height;
     }
-
-    public void move() {
-        pacman.move();
-        //red.moveToPlayer(pacman.getPos());
+    public int getTileSize() {
+        return tileSize;
     }
+    public Maze getCurrMaze() {
+        return level;
+    }
+    public Score getScore() {
+        return score;
+    }
+    //return array with row[0] and column[1] of specified position
+    //tileSize/3 used to approx. center since items are drawn from top left
+    public int[] getCurrTile(int x, int y) {
+        return new int[] {y/tileSize, x/tileSize};  
+    }
+    
 
-
+    //Methods relating to game state
     public void reset() {
-        pacman.setX(level.getPlayerStart()[0]);
-        pacman.setY(level.getPlayerStart()[1]);
+        pacman.resetPos();
+        red.resetPos();
     }
-
     public void gameOver() {
         JOptionPane.showMessageDialog(this, "Game Over...", "Game Over",JOptionPane.YES_NO_OPTION);
         System.exit(ABORT);
     }
+    public void youWin() {
+        JOptionPane.showMessageDialog(this, "You win!!!", "Complete",JOptionPane.YES_NO_OPTION);
+        System.exit(ABORT);
+    }
 
 
+    //Move method that calls individual object move methods, and loops in game loop
+    public void move() {
+        pacman.move();
+        //red.pathfind();
+        if(level.getValue(pacman.getPacNode()[0], pacman.getPacNode()[1]) == 0) {
+            level.eraseIndex(pacman.getY()/tileSize, pacman.getX()/tileSize);
+            score.pipEaten();
+        }
+    }
+
+
+    //Driver method, while loop is our game loop
     public static void main(String[] args) throws InterruptedException {
         JFrame frame = new JFrame("Pacman");
         Game game = new Game();
         frame.add(game);
-        frame.setSize(game.getWidth(), game.getHeight()-260);
+        frame.setSize(width, height);
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         //Game Loop, executes until program is exited
@@ -71,42 +104,19 @@ public class Game extends JPanel {
 
     @Override
     public void paint(Graphics g) {
-        //Calling paint in the parent class
-        super.paint(g);
-        //Importing Graphics and creating a Graphics2D object of it
-        Graphics2D g2d = (Graphics2D) g;
-        //Drawing the black background in the canvas
-        setBackground(Color.black);
-        //Turning antialiasing on for smoother shape edges
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                RenderingHints.VALUE_ANTIALIAS_ON);
+        Graphics2D g2d = (Graphics2D) g;         //Importing Graphics and creating a Graphics2D object of it
+        setBackground(Color.black);        //Drawing the black background in the canvas
+        super.paint(g); //Calling paint in the parent class
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);        //Turning antialiasing on for smoother shape edges
+
         //painting our objects
-        pacman.paint(g2d);
         level.drawMaze(g2d);
         red.paint(g2d);
-        pacman.getLives().paint(g2d);
+        this.lives.paint(g2d);
         score.drawScore(g2d);
+        pacman.paint(g2d);
     }
 
-    public boolean wallCollision() {
-        Rectangle pacBox = pacman.getMoveBound();
-        System.out.println("Pac: " + pacBox.toString());
-        for (int i = 0; i < level.getLevelData().length; i++) {
-            Rectangle wallBox = level.getBounds(i);
-            System.out.println("wall" + wallBox.toString());
-            if (level.getLevelData()[i] == 1) {
-                return pacBox.intersects(wallBox);
-            }
-        }
-        return false;
-    }
-    public void pipPickup() {
-        int pacIndex = level.getIndex(pacman.getX(), pacman.getY());
-        if(level.getLevelData()[pacIndex] == 1) {
-            level.eraseIndex(pacIndex);
-            score.pipEaten();
-        }
-    }
     public boolean ghostCollision() {
         Rectangle ghostBox = red.getBounds();
         if(ghostBox.intersects(pacman.getBounds())) {
